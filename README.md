@@ -7,7 +7,7 @@
 ```
 index.html              Sayfa iskeleti, tüm sekmeler
 css/styles.css           Tema (light/dark), tüm görsel stiller
-js/config.js              localStorage okuma/yazma (Supabase config, kimlik, tema)
+js/config.js              Supabase config sabitleri + localStorage okuma/yazma (kimlik, tema)
 js/supabaseClient.js      Supabase client oluşturma
 js/identity.js            Cihaz bazlı kullanıcı kimliği (auth yok)
 js/api.js                 Tüm veritabanı sorguları (words, duels, leaderboard...)
@@ -48,7 +48,7 @@ veya doğrudan:
 npx serve . -l 3000
 ```
 
-Sonra tarayıcıda `http://localhost:3000` aç. İlk açılışta Supabase URL, anon key ve adını gireceksin.
+Sonra tarayıcıda `http://localhost:3000` aç. İlk açılışta sadece adını gireceksin.
 
 ## Web'de yayınlama (her yerden erişim için)
 
@@ -63,3 +63,4 @@ Sonra tarayıcıda `http://localhost:3000` aç. İlk açılışta Supabase URL, 
 - **Puan**: doğru cevapta taban puan + kalan süre oranına göre hız bonusu, bu ikisinin toplamı seri çarpanı (her 3 doğruda +0.5x) ile çarpılır.
 - **HP**: yanlış/süre dolumunda -25 HP, 0'da düello o oyuncu için biter (eleme), o ana kadarki skor kaydedilir.
 - **Liderlik tablosu**: tamamlanmış tüm düello katılımları (`duel_participants`) üzerinden kullanıcı bazında toplanır (skor toplamı, doğru/yanlış toplamı, en uzun seri maksimumu, maç sayısı).
+- **Kelime silme**: Kelime Havuzu'nda sadece kendi eklediğin kelimeleri silebilirsin (arkadaşının eklediklerine dokunamazsın), onay istenir.

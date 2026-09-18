@@ -18,6 +18,15 @@ export async function addWord({ en, tr, example, addedBy }) {
   if (error) throw error;
 }
 
+export async function deleteWord(wordId, userId) {
+  const { error } = await getClient()
+    .from('words')
+    .delete()
+    .eq('id', wordId)
+    .eq('added_by', userId);
+  if (error) throw error;
+}
+
 // ---------- weak words ----------
 
 export async function getWeakWordIds(userId) {
