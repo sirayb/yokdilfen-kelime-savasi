@@ -41,27 +41,27 @@
 }
 
 :root[data-theme="dark"] {
-  /* Dark — gece nöbeti / terminal HUD */
-  --bg: #0C1210;
-  --bg-panel: #101C16;
-  --bg-panel-raised: #142219;
-  --grid-line: #1E3226;
-  --border: #39FF88;
-  --border-soft: #274435;
-  --text: #C8E6CE;
-  --text-muted: #5E8B6D;
-  --accent: #39FF88;
-  --accent-strong: #2AD46E;
-  --accent-contrast: #0C1210;
+  /* Dark — gece nöbeti / terminal HUD (mavi-mor fosfor) */
+  --bg: #0C0E14;
+  --bg-panel: #12141F;
+  --bg-panel-raised: #171A28;
+  --grid-line: #262B45;
+  --border: #7B68FF;
+  --border-soft: #2E3350;
+  --text: #D6D4F0;
+  --text-muted: #7A7FA8;
+  --accent: #7B68FF;
+  --accent-strong: #6450E0;
+  --accent-contrast: #0C0E14;
   --success: #39FF88;
-  --success-contrast: #0C1210;
+  --success-contrast: #0C0E14;
   --danger: #FF5C4D;
-  --danger-contrast: #0C1210;
-  --button-bg: #10201A;
-  --button-text: #39FF88;
-  --chip-bg: #142219;
-  --chip-bg-active: #39FF88;
-  --chip-text-active: #0C1210;
+  --danger-contrast: #0C0E14;
+  --button-bg: #171A28;
+  --button-text: #7B68FF;
+  --chip-bg: #171A28;
+  --chip-bg-active: #7B68FF;
+  --chip-text-active: #0C0E14;
   --hp-fill: #FF5C4D;
   --timer-fill: #FFB000;
 }
