@@ -147,6 +147,13 @@
 
     <div id="duel-setup">
       <div class="field">
+        <label>Mod</label>
+        <div class="chip-group" id="duel-mode">
+          <button class="chip active" data-value="live">Canlı (Senkron)</button>
+          <button class="chip" data-value="async">Kendi Zamanımda</button>
+        </div>
+      </div>
+      <div class="field">
         <label>Kaynak</label>
         <div class="chip-group" id="duel-source">
           <button class="chip active" data-value="all">Herkesin Kelimeleri</button>
@@ -181,18 +188,38 @@
       <button class="btn" id="duel-create">Düello Oluştur</button>
       <div id="duel-setup-msg" class="error-text hidden"></div>
 
+      <h3 style="margin-top:20px;">Katılabileceğin Canlı Düellolar</h3>
+      <div class="word-list" id="duel-live-joinable-list"></div>
+
+      <h3 style="margin-top:20px;">Bekleyen Düellon</h3>
+      <div class="word-list" id="duel-live-waiting-list"></div>
+
       <h3 style="margin-top:20px;">Açık Düellolar</h3>
       <div class="word-list" id="duel-open-list"></div>
+    </div>
+
+    <div id="duel-waiting-room" class="hidden" style="text-align:center;">
+      <p class="mono">Rakibini bekliyorsun...</p>
+      <p class="hint" style="color:var(--text-muted);">Bu ekranda kal, rakibin katılınca düello otomatik başlar.</p>
+      <button class="btn btn-danger" id="duel-waiting-cancel">İptal Et</button>
     </div>
 
     <div id="duel-session" class="hidden">
       <div class="hud-row">
         <div class="duel-player-hud">
           <div class="name" id="duel-my-name"></div>
-          <div class="hp-bar-track"><div class="hp-bar-fill" id="duel-my-hp" style="width:100%"></div></div>
+          <div class="hp-bar-track" id="duel-my-hp-wrap"><div class="hp-bar-fill" id="duel-my-hp" style="width:100%"></div></div>
           <div class="metrics">
             <span>Skor: <span class="mono" id="duel-my-score">0</span></span>
             <span class="streak-badge">Seri: <span id="duel-my-streak">0</span></span>
+          </div>
+        </div>
+        <div class="duel-player-hud hidden" id="duel-opp-hud">
+          <div class="name" id="duel-opp-name"></div>
+          <div class="hp-bar-track" id="duel-opp-hp-wrap"><div class="hp-bar-fill" id="duel-opp-hp" style="width:100%"></div></div>
+          <div class="metrics">
+            <span>Skor: <span class="mono" id="duel-opp-score">0</span></span>
+            <span class="streak-badge">Seri: <span id="duel-opp-streak">0</span></span>
           </div>
         </div>
       </div>
@@ -206,6 +233,7 @@
         <button class="btn" id="duel-submit">Gönder</button>
       </div>
       <p class="mono" id="duel-question-progress" style="text-align:center;margin-top:10px;"></p>
+      <p class="mono" id="duel-waiting-opponent-msg" style="text-align:center;color:var(--text-muted);"></p>
     </div>
 
     <div id="duel-result" class="hidden">
@@ -218,11 +246,14 @@
   <!-- ---------- LİDERLİK TABLOSU ---------- -->
   <section class="tab-panel" id="tab-leaderboard">
     <h2 class="panel-title">Liderlik Tablosu</h2>
+
+    <h3>Canlı Düellolar</h3>
     <table class="leaderboard-table">
       <thead>
         <tr>
           <th>#</th>
           <th>İsim</th>
+          <th>Kazanılan</th>
           <th>Toplam Puan</th>
           <th>Doğru</th>
           <th>Yanlış</th>
@@ -230,7 +261,24 @@
           <th>Maç</th>
         </tr>
       </thead>
-      <tbody id="leaderboard-body"></tbody>
+      <tbody id="leaderboard-body-live"></tbody>
+    </table>
+
+    <h3 style="margin-top:24px;">Kendi Zamanında Düellolar</h3>
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>İsim</th>
+          <th>Kazanılan</th>
+          <th>Toplam Puan</th>
+          <th>Doğru</th>
+          <th>Yanlış</th>
+          <th>En Uzun Seri</th>
+          <th>Maç</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body-async"></tbody>
     </table>
   </section>
 

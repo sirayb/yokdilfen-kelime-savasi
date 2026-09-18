@@ -24,8 +24,10 @@ Neden Supabase: kelime havuzu + düello + liderlik tablosu ilişkisel veri (kull
 ### Kurulum adımları
 
 1. [supabase.com](https://supabase.com) üzerinde ücretsiz hesap aç, yeni proje oluştur.
-2. Proje panelinde **SQL Editor**'e git, [`supabase/schema.sql`](supabase/schema.sql) dosyasının tamamını yapıştırıp çalıştır. Bu, gerekli tabloları (`users`, `words`, `weak_words`, `duels`, `duel_participants`) ve erişim izinlerini kurar.
+2. Proje panelinde **SQL Editor**'e git, [`supabase/schema.sql`](supabase/schema.sql) dosyasının tamamını yapıştırıp çalıştır. Bu, gerekli tabloları (`users`, `words`, `weak_words`, `duels`, `duel_participants`, `duel_answers`) ve erişim izinlerini kurar.
 3. Proje panelinde **Project Settings → API** sekmesine git. `Project URL` ve `anon public` key değerlerini kopyala.
+
+> `schema.sql` idempotent yazıldı (`if not exists` / `add column if not exists`) — proje zaten kuruluysa dosyayı tekrar SQL Editor'de çalıştırmak güvenlidir, sadece eksik kolon/tabloları ekler. Canlı düello özelliği eklendiğinde bu dosya güncellendi; mevcut bir projeyi güncellemek için dosyayı tekrar çalıştırman yeterli.
 
 ## Config: nasıl giriliyor?
 
@@ -60,9 +62,22 @@ Sonra tarayıcıda `http://localhost:3000` aç. İlk açılışta sadece adını
 
 ## Oyun mekaniği notları
 
-- **Düello seti sabit**: Düello oluşturulduğunda seçilen kelimeler (`word_ids`) veritabanına kaydedilir, her iki oyuncu da aynı seti kendi zamanında oynar. "Karma" yönde her sorunun TR→EN mi EN→TR mi olacağı soru sırasına göre deterministiktir (index çift/tek), böylece iki oyuncu da aynı soruyu aynı yönde görür.
-- **Puan**: doğru cevapta taban puan + kalan süre oranına göre hız bonusu, bu ikisinin toplamı seri çarpanı (her 3 doğruda +0.5x) ile çarpılır.
-- **HP**: yanlış/süre dolumunda -25 HP, 0'da düello o oyuncu için biter (eleme), o ana kadarki skor kaydedilir.
-- **Liderlik tablosu**: tamamlanmış tüm düello katılımları (`duel_participants`) üzerinden kullanıcı bazında toplanır (skor toplamı, doğru/yanlış toplamı, en uzun seri maksimumu, maç sayısı).
+### İki düello modu
+
+- **Kendi Zamanında (async)**: Düello oluşturulduğunda seçilen kelimeler (`word_ids`) veritabanına kaydedilir, her iki oyuncu da aynı seti kendi zamanında oynar, sonuçlar ikisi de bitirince karşılaştırılır.
+- **Canlı (senkron)**: Düelloyu oluşturan "bekleme odası"na girer (`duels.live_status='waiting'`). Rakip Savaş sekmesinde "Katılabileceğin Canlı Düellolar" listesinden katılınca (`live_status='active'`, ortak bir `current_question_started_at` zaman damgası) ikisi de aynı anda aynı soruyu görür. Her cevap sunucu zaman damgasıyla `duel_answers` tablosuna yazılır (Supabase Realtime ile karşı tarafa anında yansır). Her sorunun sabit bir süresi vardır (8/12/20sn); **biri doğru cevaplar cevaplamaz o an soru herkes için ilerler** (rakip cevap veremeden geçilir, bu yüzden ceza almaz) — kimse doğru bilemezse tam süre dolunca ilerler. Sayfa yenilenirse (`current_question_index`, geçmiş `duel_answers` satırları üzerinden) kaldığı yerden devam eder.
+- "Karma" yönde her sorunun TR→EN mi EN→TR mi olacağı soru sırasına göre deterministiktir (index çift/tek), böylece iki oyuncu da aynı soruyu aynı yönde görür — bu her iki modda da geçerli.
+
+### Puan ve HP
+
+- **Kendi Zamanında (async) puanı**: doğru cevapta taban puan + kalan süre oranına göre hız bonusu, toplam seri çarpanı (her 3 doğruda +0.5x) ile çarpılır. **HP**: yanlış/süre dolumunda -25 HP, 0'da düello o oyuncu için biter (eleme), o ana kadarki skor kaydedilir.
+- **Canlı puanı**: HP/eleme yok, düz puan sistemi — doğru cevap **+15**, aktif olarak yanlış cevap gönderme **-5**, süre dolup hiç cevap verilmezse (ne kendisi ne rakip bilemezse) **0** puan, ceza yok. Hız bonusu ya da seri çarpanı bu modda uygulanmaz; "en uzun seri" istatistiği yine de ayrıca tutulur.
+
+### Liderlik tablosu
+
+Async ve canlı düellolar **ayrı tablolarda** gösterilir (birbirine karışmasın diye — ikisinin doğası farklı). Her tablo tamamlanmış düello katılımları (`duel_participants`, ilgili `duels.mode`'a göre filtreli) üzerinden kullanıcı bazında toplanır: toplam puan (asıl sıralama kriteri), **kazanılan düello sayısı** (bir düello bitince skoru yüksek olan `duels.winner_id` olarak yazılır, eşitlikte kimse kazanmaz — eşit toplam puanda ikinci sıralama kriteri), doğru/yanlış toplamı, en uzun seri maksimumu, maç sayısı.
+
+### Diğer
+
 - **Kelime silme**: Kelime Havuzu'nda sadece kendi eklediğin kelimeleri silebilirsin (arkadaşının eklediklerine dokunamazsın), onay istenir.
 - **Birden fazla anlam**: İngilizce terim veya Türkçe anlam alanına virgülle ayırarak birden fazla karşılık yazabilirsin (örn. `kötüleşmek, bozulmak`). Düelloda bunlardan sadece birini doğru yazmak yeterlidir. Kelime/anlam alanları kaydedilirken otomatik küçük harfe çevrilir (örnek cümle etkilenmez), böylece büyük/küçük harf farkı eşleşmeyi bozmaz.
