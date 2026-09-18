@@ -5,6 +5,7 @@ import {
   submitDuelResult,
   getDuelParticipants,
 } from '../api.js';
+import { splitAlternatives, normalizeAnswer } from '../wordUtils.js';
 
 const HP_LOSS = 25;
 const BASE_SCORE = 10;
@@ -191,14 +192,11 @@ function handleSubmitAnswer() {
   handleAnswer(val);
 }
 
-function normalize(str) {
-  return (str || '').trim().toLocaleLowerCase('tr').normalize('NFC');
-}
-
 function handleAnswer(userAnswer) {
   const q = session.questions[session.index];
   const correctAnswer = q.dir === 'tr_en' ? q.word.en : q.word.tr;
-  const isCorrect = userAnswer !== null && normalize(userAnswer) === normalize(correctAnswer);
+  const acceptedAnswers = splitAlternatives(correctAnswer);
+  const isCorrect = userAnswer !== null && acceptedAnswers.includes(normalizeAnswer(userAnswer));
   const timeRatio = session.timeLeft / session.duel.time_per_question;
 
   if (isCorrect) {

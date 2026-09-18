@@ -1,4 +1,5 @@
 import { getClient } from './supabaseClient.js';
+import { normalizeWordField } from './wordUtils.js';
 
 // ---------- words ----------
 
@@ -14,7 +15,12 @@ export async function getWords() {
 export async function addWord({ en, tr, example, addedBy }) {
   const { error } = await getClient()
     .from('words')
-    .insert({ en, tr, example: example || null, added_by: addedBy });
+    .insert({
+      en: normalizeWordField(en),
+      tr: normalizeWordField(tr),
+      example: example || null,
+      added_by: addedBy,
+    });
   if (error) throw error;
 }
 
