@@ -84,15 +84,18 @@ export async function renderDuelTab() {
     return;
   }
 
-  const joinableList = document.getElementById('duel-live-joinable-list');
-  const waitingList = document.getElementById('duel-live-waiting-list');
-  joinableList.innerHTML = '<p class="mono">Yükleniyor...</p>';
-  waitingList.innerHTML = '';
+  // Daha önce oluşturup rakip beklerken ekrandan ayrıldığın bir düello varsa,
+  // ayrı bir liste göstermek yerine doğrudan bekleme odasına geri al.
+  const mineWaiting = await getMyWaitingLiveDuels(identityRef.userId);
+  if (mineWaiting.length) {
+    enterWaitingRoom(mineWaiting[0]);
+    return;
+  }
 
-  const [joinable, mineWaiting] = await Promise.all([
-    getJoinableLiveDuels(identityRef.userId),
-    getMyWaitingLiveDuels(identityRef.userId),
-  ]);
+  const joinableList = document.getElementById('duel-live-joinable-list');
+  joinableList.innerHTML = '<p class="mono">Yükleniyor...</p>';
+
+  const joinable = await getJoinableLiveDuels(identityRef.userId);
 
   joinableList.innerHTML = joinable.length
     ? joinable
@@ -113,26 +116,6 @@ export async function renderDuelTab() {
     btn.addEventListener('click', async () => {
       const duel = joinable.find((d) => d.id === btn.dataset.join);
       await handleJoinLiveDuel(duel);
-    });
-  });
-
-  waitingList.innerHTML = mineWaiting
-    .map(
-      (d) => `
-      <div class="word-row">
-        <div>
-          <div class="term">${sourceLabel(d.source)} · ${d.question_count} soru · ${d.time_per_question}sn · ${directionLabel(d.direction)}</div>
-          <div class="example">Rakip bekleniyor...</div>
-        </div>
-        <button class="btn btn-secondary" data-resume="${d.id}">Bekleme Odasına Dön</button>
-      </div>`
-    )
-    .join('');
-
-  waitingList.querySelectorAll('[data-resume]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const duel = mineWaiting.find((d) => d.id === btn.dataset.resume);
-      enterWaitingRoom(duel);
     });
   });
 }
