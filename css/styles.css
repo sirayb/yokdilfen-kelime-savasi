@@ -115,6 +115,11 @@ input, select, textarea {
   padding: 0.5em 0.7em;
 }
 
+textarea {
+  resize: none;
+  overflow: hidden;
+}
+
 /* ---------- layout ---------- */
 
 #app {
