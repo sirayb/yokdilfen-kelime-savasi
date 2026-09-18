@@ -11,6 +11,7 @@ js/config.js              Supabase config sabitleri + localStorage okuma/yazma (
 js/supabaseClient.js      Supabase client oluşturma
 js/identity.js            Cihaz bazlı kullanıcı kimliği (auth yok)
 js/api.js                 Tüm veritabanı sorguları (words, duels, leaderboard...)
+js/wordUtils.js            Kelime alanı normalizasyonu (küçük harf, virgüllü eş anlam eşleşmesi)
 js/app.js                 Bootstrap, sekme yönlendirme
 js/modules/*.js           Her sekme için ayrı modül (home, addWord, pool, training, duel, leaderboard, connection)
 supabase/schema.sql       Supabase'de çalıştırılacak tablo şeması
@@ -64,3 +65,4 @@ Sonra tarayıcıda `http://localhost:3000` aç. İlk açılışta sadece adını
 - **HP**: yanlış/süre dolumunda -25 HP, 0'da düello o oyuncu için biter (eleme), o ana kadarki skor kaydedilir.
 - **Liderlik tablosu**: tamamlanmış tüm düello katılımları (`duel_participants`) üzerinden kullanıcı bazında toplanır (skor toplamı, doğru/yanlış toplamı, en uzun seri maksimumu, maç sayısı).
 - **Kelime silme**: Kelime Havuzu'nda sadece kendi eklediğin kelimeleri silebilirsin (arkadaşının eklediklerine dokunamazsın), onay istenir.
+- **Birden fazla anlam**: İngilizce terim veya Türkçe anlam alanına virgülle ayırarak birden fazla karşılık yazabilirsin (örn. `kötüleşmek, bozulmak`). Düelloda bunlardan sadece birini doğru yazmak yeterlidir. Kelime/anlam alanları kaydedilirken otomatik küçük harfe çevrilir (örnek cümle etkilenmez), böylece büyük/küçük harf farkı eşleşmeyi bozmaz.
