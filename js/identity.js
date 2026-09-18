@@ -5,6 +5,22 @@ export async function ensureIdentity(displayNameIfNew) {
   let identity = getIdentity();
   if (identity) return identity;
 
+  // Aynı isimde kayıtlı biri varsa (örn. aynı kişi başka bir cihazdan giriyor),
+  // yeni kullanıcı açmak yerine mevcut kimliği bu cihaza da bağla.
+  const { data: existing, error: findError } = await getClient()
+    .from('users')
+    .select('id, display_name')
+    .ilike('display_name', displayNameIfNew.trim())
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (findError) throw findError;
+
+  if (existing) {
+    saveIdentity(existing.id, existing.display_name);
+    return { userId: existing.id, displayName: existing.display_name };
+  }
+
   const userId = crypto.randomUUID();
   const { error } = await getClient()
     .from('users')

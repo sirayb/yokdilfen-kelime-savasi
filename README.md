@@ -35,6 +35,8 @@ Supabase URL + anon key, [`js/config.js`](js/config.js) içinde sabit değer ola
 
 İlk açılışta sadece **görünen ad** sorulur, bu da o cihazın tarayıcısında `localStorage`'da saklanır ve bir daha sorulmaz. "Bağlantı" sekmesinden bu kimlik cihazdan silinebilir (tekrar ad girmek gerekir).
 
+Aynı ismi başka bir cihazda (örn. telefonda) da girersen yeni bir kullanıcı açılmaz — sistem `users` tablosunda aynı isimde kayıtlı biri olup olmadığına bakar, varsa o kimliği bu cihaza da bağlar. Böylece aynı kişi birden fazla cihazdan aynı hesapla (aynı istatistik/kelime geçmişiyle) girebilir. İsimler birbirinden ayırt edilsin diye iki farklı kişi aynı ismi kullanmamalı.
+
 Kendi Supabase projeni kullanmak istersen (örn. farklı bir kopya kurarsan), `js/config.js` en üstündeki `SUPABASE_URL` ve `SUPABASE_ANON_KEY` sabitlerini kendi değerlerinle değiştirmen yeterli — build adımı yok, direkt dosyayı düzenleyip deploy edersin.
 
 ## Yerel çalıştırma
