@@ -1,5 +1,4 @@
-import { getSupabaseConfig, saveSupabaseConfig, getIdentity, getTheme, setTheme } from './config.js';
-import { resetClient } from './supabaseClient.js';
+import { getIdentity, getTheme, setTheme } from './config.js';
 import { ensureIdentity, getAllUsers } from './identity.js';
 import { renderHome } from './modules/home.js';
 import { initAddWord } from './modules/addWord.js';
@@ -12,9 +11,8 @@ import { initConnection } from './modules/connection.js';
 applyTheme(getTheme());
 
 let identity = getIdentity();
-const config = getSupabaseConfig();
 
-if (!config || !identity) {
+if (!identity) {
   showSetupScreen();
 } else {
   boot();
@@ -24,28 +22,18 @@ function showSetupScreen() {
   document.getElementById('setup-screen').classList.remove('hidden');
   document.getElementById('app').classList.add('hidden');
 
-  const cfg = getSupabaseConfig();
-  if (cfg) {
-    document.getElementById('setup-url').value = cfg.url;
-    document.getElementById('setup-key').value = cfg.anonKey;
-  }
-
   document.getElementById('setup-submit').addEventListener('click', async () => {
-    const url = document.getElementById('setup-url').value.trim();
-    const key = document.getElementById('setup-key').value.trim();
     const name = document.getElementById('setup-name').value.trim();
     const errEl = document.getElementById('setup-error');
     errEl.classList.add('hidden');
 
-    if (!url || !key || !name) {
-      errEl.textContent = 'Tüm alanları doldur.';
+    if (!name) {
+      errEl.textContent = 'Adını gir.';
       errEl.classList.remove('hidden');
       return;
     }
 
     try {
-      saveSupabaseConfig(url, key);
-      resetClient();
       identity = await ensureIdentity(name);
       document.getElementById('setup-screen').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');

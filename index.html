@@ -11,20 +11,12 @@
 <!-- ==================== İLK KURULUM EKRANI ==================== -->
 <div id="setup-screen" class="setup-screen hidden">
   <h2>Kurulum</h2>
-  <p class="hint">Supabase proje bilgilerini ve görünen adını gir. Bu bilgiler sadece bu cihazda (localStorage) saklanır.</p>
-  <div class="field">
-    <label for="setup-url">Supabase Project URL</label>
-    <input id="setup-url" type="text" placeholder="https://xxxx.supabase.co">
-  </div>
-  <div class="field">
-    <label for="setup-key">Supabase Anon Key</label>
-    <input id="setup-key" type="text" placeholder="eyJhbGciOi...">
-  </div>
+  <p class="hint">Görünen adını gir. Bu bilgi sadece bu cihazda (localStorage) saklanır.</p>
   <div class="field">
     <label for="setup-name">Adın</label>
     <input id="setup-name" type="text" placeholder="Örn: Sıla">
   </div>
-  <button id="setup-submit" class="btn">Bağlan ve Başla</button>
+  <button id="setup-submit" class="btn">Başla</button>
   <div id="setup-error" class="error-text hidden"></div>
 </div>
 
@@ -256,7 +248,7 @@
     <button class="btn" id="connection-name-save">Kaydet</button>
 
     <h3 style="margin-top:24px;">Tehlikeli Bölge</h3>
-    <p class="hint" style="color:var(--text-muted);font-size:0.85rem;">Bu cihazın bağlantısını kaldırırsan, Supabase bilgilerin ve yerel kimliğin bu cihazdan silinir. Ortak havuzdaki veriler etkilenmez.</p>
+    <p class="hint" style="color:var(--text-muted);font-size:0.85rem;">Bu cihazın bağlantısını kaldırırsan, yerel kimliğin bu cihazdan silinir, tekrar isim girmen gerekir. Ortak havuzdaki veriler etkilenmez.</p>
     <button class="btn btn-danger" id="connection-remove">Bu Cihazın Bağlantısını Kaldır</button>
   </section>
 

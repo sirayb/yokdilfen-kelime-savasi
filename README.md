@@ -28,13 +28,11 @@ Neden Supabase: kelime havuzu + düello + liderlik tablosu ilişkisel veri (kull
 
 ## Config: nasıl giriliyor?
 
-Uygulama **build adımı olmayan** saf statik dosyalardan oluşuyor (bundler yok, doğrudan tarayıcıda ESM modülleri çalışıyor). Bu yüzden `.env` dosyası derleme sırasında koda gömülemiyor — `.env` yaklaşımı Vite/webpack gibi bir build adımı gerektirir.
+Supabase URL + anon key, [`js/config.js`](js/config.js) içinde sabit değer olarak tutuluyor — kullanıcıdan istenmiyor. `anon key` herkese açık kullanılmak üzere tasarlanmıştır (erişim `RLS` politikalarıyla korunur), koda gömülü olması güvenlik açığı değildir. Gerçek gizli anahtar `service_role` key'i asla client koduna konmamalı — bu projede zaten kullanılmıyor.
 
-Bunun yerine Supabase URL + anon key, **uygulama ilk açıldığında** bir kurulum ekranında istenir ve tarayıcının `localStorage`'ında saklanır (Firebase config girişiyle aynı mantık). Her cihazda (senin bilgisayarın, arkadaşının bilgisayarı) bu bilgiler bir kere girilir, sonra hatırlanır. "Bağlantı" sekmesinden bu bilgi cihazdan silinebilir.
+İlk açılışta sadece **görünen ad** sorulur, bu da o cihazın tarayıcısında `localStorage`'da saklanır ve bir daha sorulmaz. "Bağlantı" sekmesinden bu kimlik cihazdan silinebilir (tekrar ad girmek gerekir).
 
-Bu yaklaşımın artısı: statik dosyaları olduğu gibi Vercel/Netlify/GitHub Pages gibi herhangi bir yere atman yeterli, build ayarı/ortam değişkeni tanımlamana gerek yok. `config.example.js` / `.env.local` yöntemini bilerek eklemedim çünkü build adımı olmadan hiçbir işe yaramaz; ileride bir bundler'a geçersen (örn. Vite) o zaman anlamlı olur.
-
-> Not: `anon key` herkese açık kullanılmak üzere tasarlanmıştır (RLS ile korunur), tarayıcıda/localStorage'da tutulması güvenlik açığı değildir. Gerçek gizli anahtar `service_role` key'i asla client koduna konmamalı — bu projede zaten kullanılmıyor.
+Kendi Supabase projeni kullanmak istersen (örn. farklı bir kopya kurarsan), `js/config.js` en üstündeki `SUPABASE_URL` ve `SUPABASE_ANON_KEY` sabitlerini kendi değerlerinle değiştirmen yeterli — build adımı yok, direkt dosyayı düzenleyip deploy edersin.
 
 ## Yerel çalıştırma
 
@@ -57,7 +55,7 @@ Sonra tarayıcıda `http://localhost:3000` aç. İlk açılışta Supabase URL, 
 1. Bu klasörü bir GitHub reposuna push et.
 2. [Vercel](https://vercel.com) veya [Netlify](https://netlify.com) üzerinde ücretsiz hesap aç, repoyu bağla. Build ayarı gerekmiyor (statik site) — "framework preset: Other / static" seç, build command boş bırakılabilir.
 3. Deploy sonrası verilen sabit link (örn. `yokdilfen.vercel.app`) her iki arkadaşta da açılır. Her push'ta otomatik güncellenir.
-4. Arkadaşın da aynı linki açtığında kendi cihazında ilk kurulum ekranını görür — aynı Supabase URL + anon key'i (sana sorup) girer, kendi adını yazar. Böylece ikiniz aynı ortak havuza bağlanmış olursunuz.
+4. Arkadaşın da aynı linki açtığında kendi cihazında ilk kurulum ekranını görür — sadece kendi adını yazar. Supabase bağlantısı koda gömülü olduğu için ekstra bilgi girmesi gerekmez. Böylece ikiniz aynı ortak havuza bağlanmış olursunuz.
 
 ## Oyun mekaniği notları
 

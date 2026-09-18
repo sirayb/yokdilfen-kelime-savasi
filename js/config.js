@@ -1,20 +1,17 @@
+// anon key RLS ile korunur, tarayıcı tarafında herkese açık kullanılmak üzere
+// tasarlanmıştır — bu yüzden burada sabit değer olarak tutuluyor, kullanıcıdan
+// istenmiyor. Gizli tutulması gereken service_role key asla buraya konmamalı.
+const SUPABASE_URL = 'https://qerrstupajwdnfnqdjjo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcnJzdHVwYWp3ZG5mbnFkampvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NDY2MDgsImV4cCI6MjEwNTMyMjYwOH0.gymitCHMZ0cDktjAquEYHJIocQ9gpe4_sLvghx3GmhQ';
+
 const KEYS = {
-  url: 'yokdilfen_supabase_url',
-  anonKey: 'yokdilfen_supabase_anon_key',
   userId: 'yokdilfen_user_id',
   displayName: 'yokdilfen_display_name',
   theme: 'yokdilfen_theme',
 };
 
 export function getSupabaseConfig() {
-  const url = localStorage.getItem(KEYS.url);
-  const anonKey = localStorage.getItem(KEYS.anonKey);
-  return url && anonKey ? { url, anonKey } : null;
-}
-
-export function saveSupabaseConfig(url, anonKey) {
-  localStorage.setItem(KEYS.url, url);
-  localStorage.setItem(KEYS.anonKey, anonKey);
+  return { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY };
 }
 
 export function getIdentity() {
