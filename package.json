@@ -1,0 +1,9 @@
+{
+  "name": "yokdilfen-kelime-savasi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "YÖKDİL Fen icin gamification'li ortak kelime havuzu ve duello uygulamasi",
+  "scripts": {
+    "dev": "npx serve . -l 3000"
+  }
+}
