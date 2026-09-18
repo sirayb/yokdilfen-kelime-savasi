@@ -82,26 +82,6 @@ export async function createDuel({ createdBy, source, questionCount, timePerQues
   return data;
 }
 
-export async function getOpenDuelsForUser(userId) {
-  const { data: duels, error } = await getClient()
-    .from('duels')
-    .select('*')
-    .eq('status', 'open')
-    .eq('mode', 'async')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-
-  const { data: myParticipations, error: pErr } = await getClient()
-    .from('duel_participants')
-    .select('duel_id')
-    .eq('user_id', userId)
-    .not('finished_at', 'is', null);
-  if (pErr) throw pErr;
-
-  const finishedIds = new Set(myParticipations.map((p) => p.duel_id));
-  return duels.filter((d) => !finishedIds.has(d.id));
-}
-
 export async function getDuel(duelId) {
   const { data, error } = await getClient().from('duels').select('*').eq('id', duelId).single();
   if (error) throw error;
@@ -289,16 +269,6 @@ export async function getDuelParticipants(duelId) {
     .eq('duel_id', duelId);
   if (error) throw error;
   return data;
-}
-
-export async function getMyFinishedDuelCount(userId) {
-  const { count, error } = await getClient()
-    .from('duel_participants')
-    .select('duel_id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .not('finished_at', 'is', null);
-  if (error) throw error;
-  return count || 0;
 }
 
 export async function getMyDuelStats(userId) {

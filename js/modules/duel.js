@@ -1,7 +1,6 @@
 import {
   getWords,
   createDuel,
-  getOpenDuelsForUser,
   submitDuelResult,
   getDuelParticipants,
   getJoinableLiveDuels,
@@ -17,9 +16,6 @@ import {
 } from '../api.js';
 import { splitAlternatives, normalizeAnswer } from '../wordUtils.js';
 
-const HP_LOSS = 25;
-const BASE_SCORE = 10;
-const SPEED_BONUS_MAX = 10;
 const LIVE_ADVANCE_GRACE_MS = 4000;
 const LIVE_CORRECT_POINTS = 15;
 const LIVE_WRONG_POINTS = 5;
@@ -28,9 +24,9 @@ let identityRef = null;
 let userNames = new Map();
 let onFinishedCallback = null;
 
-let selection = { mode: 'live', source: 'all', count: 15, time: 8, direction: 'tr_en' };
+let selection = { source: 'all', count: 15, time: 8, direction: 'tr_en' };
 
-let session = null; // aktif düello oturumu (async ya da live)
+let session = null; // aktif düello oturumu
 let timerHandle = null;
 let advanceFallbackHandle = null;
 
@@ -43,7 +39,6 @@ export function initDuel(identity, allUsers, onFinished) {
   userNames = new Map(allUsers.map((u) => [u.id, u.display_name]));
   onFinishedCallback = onFinished;
 
-  wireChipGroup('duel-mode', (v) => (selection.mode = v));
   wireChipGroup('duel-source', (v) => (selection.source = v));
   wireChipGroup('duel-count', (v) => (selection.count = Number(v)));
   wireChipGroup('duel-time', (v) => (selection.time = Number(v)));
@@ -91,15 +86,12 @@ export async function renderDuelTab() {
 
   const joinableList = document.getElementById('duel-live-joinable-list');
   const waitingList = document.getElementById('duel-live-waiting-list');
-  const openList = document.getElementById('duel-open-list');
   joinableList.innerHTML = '<p class="mono">Yükleniyor...</p>';
   waitingList.innerHTML = '';
-  openList.innerHTML = '<p class="mono">Yükleniyor...</p>';
 
-  const [joinable, mineWaiting, openDuels] = await Promise.all([
+  const [joinable, mineWaiting] = await Promise.all([
     getJoinableLiveDuels(identityRef.userId),
     getMyWaitingLiveDuels(identityRef.userId),
-    getOpenDuelsForUser(identityRef.userId),
   ]);
 
   joinableList.innerHTML = joinable.length
@@ -143,28 +135,6 @@ export async function renderDuelTab() {
       enterWaitingRoom(duel);
     });
   });
-
-  openList.innerHTML = openDuels.length
-    ? openDuels
-        .map(
-          (d) => `
-      <div class="word-row">
-        <div>
-          <div class="term">${sourceLabel(d.source)} · ${d.question_count} soru · ${d.time_per_question}sn · ${directionLabel(d.direction)}</div>
-          <div class="example">Oluşturan: ${d.created_by === identityRef.userId ? 'Sen' : userNames.get(d.created_by) || '—'}</div>
-        </div>
-        <button class="btn" data-play="${d.id}">Oyna</button>
-      </div>`
-        )
-        .join('')
-    : '<p class="mono">Açık düello yok.</p>';
-
-  openList.querySelectorAll('[data-play]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const duel = openDuels.find((d) => d.id === btn.dataset.play);
-      await playAsyncDuel(duel);
-    });
-  });
 }
 
 // ---------- düello oluşturma ----------
@@ -195,14 +165,10 @@ async function handleCreateDuel() {
     timePerQuestion: selection.time,
     direction: selection.direction,
     wordIds,
-    mode: selection.mode,
+    mode: 'live',
   });
 
-  if (selection.mode === 'live') {
-    enterWaitingRoom(duel);
-  } else {
-    await playAsyncDuel(duel);
-  }
+  enterWaitingRoom(duel);
 }
 
 function buildQuestions(duel, words) {
@@ -226,66 +192,6 @@ function shuffle(arr) {
   return a;
 }
 
-// ---------- ASYNC düello (herkes kendi zamanında) ----------
-
-async function playAsyncDuel(duel) {
-  const words = await getWords();
-
-  session = {
-    mode: 'async',
-    duel,
-    questions: buildQuestions(duel, words),
-    index: 0,
-    hp: 100,
-    score: 0,
-    streak: 0,
-    longestStreak: 0,
-    correct: 0,
-    wrong: 0,
-    eliminated: false,
-    answers: [],
-    timeLeft: duel.time_per_question,
-  };
-
-  showPanel('duel-session');
-  document.getElementById('duel-opp-hud').classList.add('hidden');
-  document.getElementById('duel-my-hp-wrap').classList.remove('hidden');
-  document.getElementById('duel-waiting-opponent-msg').textContent = '';
-  document.getElementById('duel-my-name').textContent = identityRef.displayName;
-
-  updateHud();
-  showAsyncQuestion();
-}
-
-function updateHud() {
-  document.getElementById('duel-my-hp').style.width = `${session.hp}%`;
-  document.getElementById('duel-my-score').textContent = session.score;
-  document.getElementById('duel-my-streak').textContent = session.streak;
-}
-
-function showAsyncQuestion() {
-  const q = session.questions[session.index];
-  renderQuestionPrompt(q, session.index, session.questions.length);
-  document.getElementById('duel-answer-input').disabled = false;
-  document.getElementById('duel-submit').disabled = false;
-
-  session.timeLeft = session.duel.time_per_question;
-  const totalMs = session.duel.time_per_question * 1000;
-  const start = performance.now();
-
-  clearInterval(timerHandle);
-  timerHandle = setInterval(() => {
-    const elapsed = performance.now() - start;
-    const remainingMs = Math.max(0, totalMs - elapsed);
-    session.timeLeft = remainingMs / 1000;
-    document.getElementById('duel-timer-bar').style.width = `${(remainingMs / totalMs) * 100}%`;
-    if (remainingMs <= 0) {
-      clearInterval(timerHandle);
-      handleAsyncAnswer(null);
-    }
-  }, 100);
-}
-
 function renderQuestionPrompt(q, index, total) {
   document.getElementById('duel-prompt-label').textContent = q.dir === 'tr_en' ? 'TR → EN' : 'EN → TR';
   document.getElementById('duel-prompt-word').textContent = q.dir === 'tr_en' ? q.word.tr : q.word.en;
@@ -300,56 +206,7 @@ function evaluateAnswer(q, userAnswer) {
   return userAnswer !== null && acceptedAnswers.includes(normalizeAnswer(userAnswer));
 }
 
-function handleAsyncAnswer(userAnswer) {
-  const q = session.questions[session.index];
-  const isCorrect = evaluateAnswer(q, userAnswer);
-  const timeRatio = session.timeLeft / session.duel.time_per_question;
-
-  if (isCorrect) {
-    session.correct++;
-    session.streak++;
-    session.longestStreak = Math.max(session.longestStreak, session.streak);
-    const multiplier = 1 + Math.floor(session.streak / 3) * 0.5;
-    session.score += Math.round((BASE_SCORE + timeRatio * SPEED_BONUS_MAX) * multiplier);
-  } else {
-    session.wrong++;
-    session.streak = 0;
-    session.hp = Math.max(0, session.hp - HP_LOSS);
-    if (session.hp === 0) session.eliminated = true;
-  }
-
-  session.answers.push({ wordId: q.word.id, correct: isCorrect, userAnswer: userAnswer || '' });
-  session.index++;
-  updateHud();
-
-  if (session.eliminated || session.index >= session.questions.length) {
-    endAsyncDuel();
-  } else {
-    showAsyncQuestion();
-  }
-}
-
-async function endAsyncDuel() {
-  clearInterval(timerHandle);
-
-  await submitDuelResult(session.duel.id, identityRef.userId, {
-    score: session.score,
-    hp: session.hp,
-    correct: session.correct,
-    wrong: session.wrong,
-    longestStreak: session.longestStreak,
-    eliminated: session.eliminated,
-    answers: session.answers,
-  });
-
-  const participants = await getDuelParticipants(session.duel.id);
-  const me = participants.find((p) => p.user_id === identityRef.userId);
-  const opponent = participants.find((p) => p.user_id !== identityRef.userId);
-
-  showResult(me, opponent && opponent.finished_at ? opponent : null);
-}
-
-// ---------- LIVE düello (senkron) ----------
+// ---------- canlı (senkron) düello ----------
 
 function enterWaitingRoom(duel) {
   waitingDuelId = duel.id;
@@ -398,7 +255,7 @@ function handleDuelRowUpdate(newRow) {
     playLiveDuel(newRow);
     return;
   }
-  if (!session || session.mode !== 'live' || newRow.id !== session.duel.id) return;
+  if (!session || newRow.id !== session.duel.id) return;
 
   session.duel = newRow;
   if (newRow.live_status === 'finished') {
@@ -418,10 +275,10 @@ function handleDuelRowUpdate(newRow) {
 }
 
 function handleOpponentAnswerRow(row) {
-  if (!session || session.mode !== 'live' || row.duel_id !== session.duel.id) return;
+  if (!session || row.duel_id !== session.duel.id) return;
   if (row.user_id === identityRef.userId) return;
 
-  session.opponentState = { score: row.score_after, hp: row.hp_after, streak: row.streak_after };
+  session.opponentState = { score: row.score_after, streak: row.streak_after };
   updateOpponentHud();
 
   if (row.question_index === session.index) {
@@ -437,22 +294,18 @@ async function playLiveDuel(duel) {
   const opponentUserId = opponentIdOf(duel);
 
   session = {
-    mode: 'live',
     duel,
     questions: buildQuestions(duel, words),
     index: duel.current_question_index,
     lastRenderedIndex: -1,
-    hp: 100,
     score: 0,
     streak: 0,
     longestStreak: 0,
     correct: 0,
     wrong: 0,
-    eliminated: false,
-    answers: [],
     timeLeft: duel.time_per_question,
     opponentUserId,
-    opponentState: { score: 0, hp: 100, streak: 0 },
+    opponentState: { score: 0, streak: 0 },
     myAnsweredCurrent: false,
     opponentAnsweredCurrent: false,
     myCorrectForCurrent: null,
@@ -473,7 +326,7 @@ async function playLiveDuel(duel) {
     session.longestStreak = myRows.reduce((m, r) => Math.max(m, r.streak_after), 0);
   }
   if (oppLast) {
-    session.opponentState = { score: oppLast.score_after, hp: 100, streak: oppLast.streak_after };
+    session.opponentState = { score: oppLast.score_after, streak: oppLast.streak_after };
   }
   const myCurrent = myRows.find((r) => r.question_index === session.index);
   session.myAnsweredCurrent = !!myCurrent;
@@ -486,8 +339,6 @@ async function playLiveDuel(duel) {
 
   showPanel('duel-session');
   document.getElementById('duel-opp-hud').classList.remove('hidden');
-  document.getElementById('duel-my-hp-wrap').classList.add('hidden');
-  document.getElementById('duel-opp-hp-wrap').classList.add('hidden');
   document.getElementById('duel-my-name').textContent = identityRef.displayName;
   document.getElementById('duel-opp-name').textContent = userNames.get(opponentUserId) || 'Rakip';
 
@@ -496,8 +347,12 @@ async function playLiveDuel(duel) {
   goToLiveQuestion(session.index, duel.current_question_started_at);
 }
 
+function updateHud() {
+  document.getElementById('duel-my-score').textContent = session.score;
+  document.getElementById('duel-my-streak').textContent = session.streak;
+}
+
 function updateOpponentHud() {
-  document.getElementById('duel-opp-hp').style.width = `${session.opponentState.hp}%`;
   document.getElementById('duel-opp-score').textContent = session.opponentState.score;
   document.getElementById('duel-opp-streak').textContent = session.opponentState.streak;
 }
@@ -557,12 +412,7 @@ function goToLiveQuestion(index, startedAtIso) {
 function handleSubmitAnswer() {
   if (!session) return;
   const val = document.getElementById('duel-answer-input').value;
-  if (session.mode === 'async') {
-    clearInterval(timerHandle);
-    handleAsyncAnswer(val);
-  } else {
-    handleLiveAnswer(val);
-  }
+  handleLiveAnswer(val);
 }
 
 async function handleLiveAnswer(userAnswer, isTimeout = false) {
@@ -603,7 +453,7 @@ async function handleLiveAnswer(userAnswer, isTimeout = false) {
 }
 
 async function maybeAdvanceLive(force = false) {
-  if (!session || session.mode !== 'live') return;
+  if (!session) return;
 
   const someoneCorrect = session.myCorrectForCurrent === true || session.opponentCorrectForCurrent === true;
   const bothAnswered = session.myAnsweredCurrent && session.opponentAnsweredCurrent;
@@ -626,12 +476,12 @@ async function finishLiveDuel() {
 
   await submitDuelResult(session.duel.id, identityRef.userId, {
     score: session.score,
-    hp: session.hp,
+    hp: 100,
     correct: session.correct,
     wrong: session.wrong,
     longestStreak: session.longestStreak,
-    eliminated: session.eliminated,
-    answers: session.answers,
+    eliminated: false,
+    answers: [],
   });
 
   const participants = await getDuelParticipants(session.duel.id);
@@ -654,14 +504,14 @@ function showResult(me, opponent) {
   let html = `
     <div class="word-row">
       <div class="term">Sen</div>
-      <div class="mono">Skor: ${me.score} · Doğru: ${me.correct} · Yanlış: ${me.wrong} · Seri: ${me.longest_streak}${me.eliminated ? ' · ELENDİN' : ''}</div>
+      <div class="mono">Skor: ${me.score} · Doğru: ${me.correct} · Yanlış: ${me.wrong} · Seri: ${me.longest_streak}</div>
     </div>`;
 
   if (opponent) {
     html += `
     <div class="word-row">
       <div class="term">${userNames.get(opponent.user_id) || 'Rakip'}</div>
-      <div class="mono">Skor: ${opponent.score} · Doğru: ${opponent.correct} · Yanlış: ${opponent.wrong} · Seri: ${opponent.longest_streak}${opponent.eliminated ? ' · ELENDİ' : ''}</div>
+      <div class="mono">Skor: ${opponent.score} · Doğru: ${opponent.correct} · Yanlış: ${opponent.wrong} · Seri: ${opponent.longest_streak}</div>
     </div>
     <h3 style="margin-top:14px;">${me.score > opponent.score ? 'Kazandın!' : me.score < opponent.score ? 'Kaybettin.' : 'Berabere.'}</h3>`;
   } else {

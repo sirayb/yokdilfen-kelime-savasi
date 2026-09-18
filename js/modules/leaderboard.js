@@ -1,15 +1,10 @@
 import { getLeaderboard } from '../api.js';
 
 export async function renderLeaderboard(identity) {
-  await renderTable('leaderboard-body-live', 'live', identity);
-  await renderTable('leaderboard-body-async', 'async', identity);
-}
-
-async function renderTable(bodyId, mode, identity) {
-  const body = document.getElementById(bodyId);
+  const body = document.getElementById('leaderboard-body');
   body.innerHTML = '<tr><td colspan="8" class="mono">Yükleniyor...</td></tr>';
 
-  const rows = await getLeaderboard(mode);
+  const rows = await getLeaderboard('live');
 
   if (rows.length === 0) {
     body.innerHTML = '<tr><td colspan="8" class="mono">Henüz tamamlanmış düello yok.</td></tr>';
